@@ -70,9 +70,21 @@ void cleanup() {
  */
 void run_server(char *port) {
     int s;
-    int optval = 1;
+    int optval1 = 1;
+    int optval2 = 1;
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-    setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    if (sock_fd < 0)
+    {
+        perror("socket() failed\n");
+        exit(1);
+    }
+    int setsock1 = setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &optval1, sizeof(optval1));
+    int setsock2 = setsockopt(sock_fd, SOL_SOCKET, SO_REUSEPORT, &optval2, sizeof(optval2));
+    if (setsock1 != 0 || setsock2 != 0)
+    {
+        perror("setsockopt() failed\n");
+        exit(1);
+    }
     struct addrinfo hints, *result;
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;
@@ -105,7 +117,10 @@ void run_server(char *port) {
     while(endSession == 0)
     {
         printf("Waiting for connection...\n");
-        int client = accept(sock_fd, NULL, NULL);
+        struct sockaddr_storage clientaddr;
+        socklen_t clientaddrsize = sizeof(clientaddr);
+
+        int client = accept(sock_fd, (struct sockaddr *)&clientaddr, &clientaddrsize);
         if (client == -1)
         {
             perror("accept() failed\n");
@@ -116,7 +131,7 @@ void run_server(char *port) {
         intptr_t client_id = -1;
         if (clientsCount > MAX_CLIENTS)
         {
-            shutdown(client, SHUT_RD);
+            //shutdown(client, SHUT_RD);
             close(client);
             pthread_mutex_unlock(&mutex);
             continue;
