@@ -107,19 +107,21 @@ void run_server(char *port) {
         exit(1);
     }
 
-    if (listen(sock_fd, MAX_CLIENTS) != 0)
+    if (listen(sock_fd, MAX_CLIENTS + 1) != 0)
     {
         perror("bind() failed\n");
         freeaddrinfo(result);
         exit(1);
     }
     freeaddrinfo(result);
+    for (int i = 0; i < MAX_CLIENTS; i++)
+        clients[i] = -1;
     while(endSession == 0)
     {
         printf("Waiting for connection...\n");
         struct sockaddr_storage clientaddr;
         socklen_t clientaddrsize = sizeof(clientaddr);
-
+        memset(&clientaddr, 0, sizeof(struct sockaddr_storage));
         int client = accept(sock_fd, (struct sockaddr *)&clientaddr, &clientaddrsize);
         if (client == -1)
         {
@@ -132,6 +134,7 @@ void run_server(char *port) {
         if (clientsCount > MAX_CLIENTS)
         {
             //shutdown(client, SHUT_RD);
+            clientsCount--;
             close(client);
             pthread_mutex_unlock(&mutex);
             continue;
