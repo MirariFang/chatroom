@@ -21,14 +21,6 @@ CFLAGS_RELEASE = -O2 $(WARNINGS) $(INCLUDES) -std=c99 -c -MMD -MP -D_GNU_SOURCE 
 LD = clang
 LDFLAGS = -pthread -lncurses
 
-# the string in grep must appear in the hostname, otherwise the Makefile will
-# not allow the assignment to compile
-IS_VM=$(shell hostname | grep "cs241")
-
-ifeq ($(IS_VM),)
-$(error This assignment must be compiled on the CS241 VMs)
-endif
-
 .PHONY: all
 all: release
 
